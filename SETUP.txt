@@ -1,5 +1,5 @@
 BCM2835
-	wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.50.tar.gz 
+	wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.50.tar.gz 			in the home directory
 	tar zxvf bcm2835-1.50.tar.gz 
 	cd bcm2835-1.50
 	./configure
@@ -7,16 +7,19 @@ BCM2835
 	sudo make check
 	sudo make install
 
+	cd ..
+	
 LAB STREAMING LAYER
 	sudo apt-get update
 	sudo apt-get install cmake
 	sudo apt-get install git
 	
 	git clone https://github.com/sccn/labstreaminglayer.git 					in the home directory
-
-	nano ~/labstreaminglayer/LSL/liblsl/src/CMakeLists.txt 						and remove references to legacy
+	cd labstreaminglayer/LSL/liblsl
+	nano ./src/CMakeLists.txt 													remove references to legacy
 
 	mkdir build																	in ~/labstreaminglayer/LSL/liblsl
+	cd build
 	cmake ..    																in liblsl/build
 	make																		in liblsl/build
 
