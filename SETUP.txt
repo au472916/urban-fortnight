@@ -1,0 +1,30 @@
+BCM2835
+	wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.50.tar.gz 
+	tar zxvf bcm2835-1.50.tar.gz 
+	cd bcm2835-1.50
+	./configure
+	make
+	sudo make check
+	sudo make install
+
+LAB STREAMING LAYER
+	sudo apt-get update
+	sudo apt-get install cmake
+	sudo apt-get install git
+	
+	git clone https://github.com/sccn/labstreaminglayer.git 					in the home directory
+
+	nano ~/labstreaminglayer/LSL/liblsl/src/CMakeLists.txt 						and remove references to legacy
+
+	mkdir build																	in ~/labstreaminglayer/LSL/liblsl
+	cmake ..    																in liblsl/build
+	make																		in liblsl/build
+
+	sudo cp ./src/liblsl.so /usr/lib/											in liblsl/build
+
+	ldconfig -n /usr/lib/liblsl.so												
+
+	gcc -Lusr/local/lib/lsl -Wall -o progName cFileName.c -llsl					in code directory (should be under home directory)
+	%%Might need this not sure			export LD_LIBRARY_PATH=/usr/local/lib/lsl:$LD_LIBRARY_PATH
+
+	./progName																	in code directory
