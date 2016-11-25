@@ -1,4 +1,4 @@
-#include "../../../../labstreaminglayer/LSL/liblsl/include/lsl_c.h"
+#include "../labstreaminglayer/LSL/liblsl/include/lsl_c.h"
 #include "ads1299.h"
 #include <stdio.h>
 #include <bcm2835.h>
