@@ -28,3 +28,13 @@ LAB STREAMING LAYER
 	sudo cp ./src/liblsl.so /usr/lib/	
 
 	ldconfig -n /usr/lib/liblsl.so		
+
+ADS1299
+	cd ~
+	git clone https://github.com/au472916/urban-fortnight.git
+	cd urban-fortnight/
+	gcc -Lusr/local/lib/lsl -o prog mainProg.c ads1299.c -llsl -lbcm2835
+	
+Run the program with:
+	sudo ./prog
+	
