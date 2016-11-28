@@ -18,7 +18,7 @@ LAB STREAMING LAYER
 	cd ~
 	git clone https://github.com/sccn/labstreaminglayer.git 		
 	cd labstreaminglayer/LSL/liblsl
-	nano ./src/CMakeLists.txt		//remove references to legacy
+	nano ./src/CMakeLists.txt		//remove line 29: legacy/legacy_abi.cpp
 
 	mkdir build	
 	cd build
