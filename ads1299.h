@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include <string.h>
 
 //Define spi pins for use as gpio pins on startup
@@ -86,8 +87,12 @@ void ChannelSetup(uint8_t*);
 void ReadSingle(long*);
 
 void InitReadContinuous();
-void ReadContinuous(lsl_outlet*, RCArrays *pRCArrays);
+void ReadContinuous(lsl_outlet*, RCArrays*);
 void ExitReadContinuous();
+
+long int InitReadMicrophone(struct timespec*);
+void ReadMicrophone(struct timespec*, long int*);
+void ExitReadMicrophone();
 
 void TranslateData(long*, uint8_t*, uint8_t);
 void SetupError();

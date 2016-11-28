@@ -1,6 +1,8 @@
-#include "../labstreaminglayer/LSL/liblsl/include/lsl_c.h"
+#include "../../../../labstreaminglayer/LSL/liblsl/include/lsl_c.h"
 #include "ads1299.h"
 #include <stdio.h>
+#include <sys/time.h>
+#include <time.h>
 #include <bcm2835.h>
 
 int InputCheck(int seconds)
@@ -12,7 +14,6 @@ int InputCheck(int seconds)
     FD_SET(0, &set);
     return select(1, &set, NULL, NULL, &timeout) == 1;
 }
-
 
 uint8_t PinInit()
 {
@@ -205,7 +206,7 @@ void ReadContinuous(lsl_outlet * outlet, RCArrays *pRCArrays)
 	//memset(read_array, 0 , 27);
 	//bcm2835_gpio_len(PIN_DRDY);
 //	uint8_t i = 0;
-	char quit_str[2];
+//	char quit_str[2];
 	//Read conversion data and translate to decimal
 //	while(1){
 		if(bcm2835_gpio_eds(PIN_DRDY))
@@ -252,19 +253,38 @@ void ExitReadContinuous(){
                 sequence[i] = (i==seq_length-2) ? STOP : 0x00;
         bcm2835_spi_writenb(sequence,seq_length);
 }
-/*
-void InitReadMicrophone{
+
+long int InitReadMicrophone(struct timespec *get_time){
+	clock_gettime(CLOCK_REALTIME, get_time);
+	return get_time->tv_nsec;
+}
+
+void ReadMicrophone(struct timespec *get_time, long int *last_event){
+	clock_gettime(CLOCK_REALTIME, get_time);
+	long int event_difference = get_time->tv_nsec - *last_event;
+	uint8_t io_state = bcm2835_gpio_lev(RPI_V2_GPIO_P1_05); 
+	//If last_event is greater than 1.000.000.00
+        //Create a new last_event from current time
+        //Check difference again
+        if(event_difference < 0){
+        	clock_gettime(CLOCK_REALTIME, get_time);
+        	*last_event = get_time->tv_nsec;
+        	event_difference = get_time->tv_nsec - *last_event;
+        }
+	//If time since last_event is 1ms, run this
+        if(event_difference > 1000000){
+        	*last_event += 1000000;
+       		io_state ^= 1;
+        	bcm2835_gpio_write(RPI_V2_GPIO_P1_05 , io_state);
+        //ReadMicrophone(&outletMic);
+        }
 
 }
 
-void ReadMicrophone{
+void ExitReadMicrophone(){
 
 }
 
-void ExitReadMicrophone{
-
-}
-*/
 uint8_t * ReadRegister(uint8_t * read_array, uint8_t reg, uint8_t length)
 {
 	if(!length){
