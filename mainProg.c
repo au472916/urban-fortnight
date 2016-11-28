@@ -1,4 +1,4 @@
-#include "../../../../labstreaminglayer/LSL/liblsl/include/lsl_c.h"
+#include "../labstreaminglayer/LSL/liblsl/include/lsl_c.h"
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
