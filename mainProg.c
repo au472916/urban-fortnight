@@ -28,7 +28,10 @@ int main()
 	//counter variable for for loops
 	int i;
 
-
+	//Variables for timing LTC1864
+	long int last_event;
+	struct timespec get_time;
+	
 	//Initialise GPIO pins
 	PinInit();
 
