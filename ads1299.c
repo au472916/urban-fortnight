@@ -146,7 +146,7 @@ void StartupSequence()
 	ConfigSetup(config_array);
 	
 	//Initialize CHANNEL Registers
-	uint8_t channel_array[8] = {0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07}
+	uint8_t channel_array[8] = {0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07};
 	ChannelSetup(channel_array);
 	
 	//Enable SRB1
@@ -376,7 +376,7 @@ uint8_t WriteRegister(uint8_t * reg_values, uint8_t reg, uint8_t length)
 void LSLInit(lsl_outlet * outlet)
 {
 	lsl_streaminfo info;
-	char channels[] = { 'C1', 'C2','C3','C4','C5','C6','C7','C8'};	//Channel Labels
+	char channels[] = {'C1','C2','C3','C4','C5','C6','C7','C8'};	//Channel Labels
 	lsl_xml_ptr desc, chn, chns;	//XML element pointers
 	uint8_t c;			//Channel index
 
@@ -394,7 +394,7 @@ void LSLInit(lsl_outlet * outlet)
 	chns = lsl_append_child(desc,"channels");
 	for (c=0;c<8;c++) {
 		chn = lsl_append_child(chns,"channel");
-		lsl_append_child_value(chn,"label",channels[c]);
+		lsl_append_child_value(chn,"label",channels+c);
 		lsl_append_child_value(chn,"unit","Extrovolts");
 		lsl_append_child_value(chn,"type","EEG");
       		}
