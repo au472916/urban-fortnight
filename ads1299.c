@@ -17,88 +17,101 @@ int InputCheck(int seconds)
 
 uint8_t PinInit()
 {
-
 	printf("Initiating BCM2835...\n");
-        if (!bcm2835_init())
-        {
-                printf("Initiation failed. Are you running as root?\n");
-                return 1;
-        }
-        printf("BCM2835 initiated!\n");
-
-        // Set all pins as GPIO pins
-        bcm2835_gpio_fsel(MOSI,         BCM2835_GPIO_FSEL_OUTP);
-        bcm2835_gpio_fsel(MISO,         BCM2835_GPIO_FSEL_OUTP);
-        bcm2835_gpio_fsel(SCLK,         BCM2835_GPIO_FSEL_OUTP);
-        bcm2835_gpio_fsel(CS,           BCM2835_GPIO_FSEL_OUTP);
-        bcm2835_gpio_fsel(PIN_RESET,    BCM2835_GPIO_FSEL_OUTP);
-        bcm2835_gpio_fsel(PIN_START,    BCM2835_GPIO_FSEL_OUTP);
-        bcm2835_gpio_fsel(PIN_PDWN,     BCM2835_GPIO_FSEL_OUTP);
-        bcm2835_gpio_fsel(PIN_DRDY,	BCM2835_GPIO_FSEL_INPT);
-        bcm2835_gpio_fsel(PIN_PWUP,	BCM2835_GPIO_FSEL_OUTP);
+	if (!bcm2835_init())
+	{
+		printf("Initiation failed. Are you running as root?\n");
+		return 1;
+	}
+	printf("BCM2835 initiated!\n");
+	
+	//Set all pins as GPIO pins
+	//Pins for SPI
+	bcm2835_gpio_fsel(MOSI,        	BCM2835_GPIO_FSEL_OUTP);
+	bcm2835_gpio_fsel(MISO,		BCM2835_GPIO_FSEL_OUTP);
+	bcm2835_gpio_fsel(SCLK,		BCM2835_GPIO_FSEL_OUTP);
+	bcm2835_gpio_fsel(CS,		BCM2835_GPIO_FSEL_OUTP);
+	
+	//Pins for GPIO	
+	//Direct ADS1299 connections
+	bcm2835_gpio_fsel(PIN_RESET,	BCM2835_GPIO_FSEL_OUTP);
+	bcm2835_gpio_fsel(PIN_START, 	BCM2835_GPIO_FSEL_OUTP);
+	bcm2835_gpio_fsel(PIN_PDWN, 	BCM2835_GPIO_FSEL_OUTP);
+	bcm2835_gpio_fsel(PIN_DRDY,	BCM2835_GPIO_FSEL_INPT);
+	//ADS analog and digital supply pins
+	bcm2835_gpio_fsel(PIN_PWUP,	BCM2835_GPIO_FSEL_OUTP);
 	bcm2835_gpio_fsel(PIN_DVDD, 	BCM2835_GPIO_FSEL_OUTP);
 
-        //Set all output pins low
-        bcm2835_gpio_write(MOSI,	LOW);
-        bcm2835_gpio_write(MISO,	LOW);
-        bcm2835_gpio_write(SCLK,	LOW);
-        bcm2835_gpio_write(CS,		LOW);
-        bcm2835_gpio_write(PIN_RESET,	LOW);
-        bcm2835_gpio_write(PIN_START,	LOW);
-        bcm2835_gpio_write(PIN_PDWN,	LOW);
-        bcm2835_gpio_write(PIN_PWUP,	LOW);
+	//Set all output pins low
+	bcm2835_gpio_write(MOSI,	LOW);
+	bcm2835_gpio_write(MISO,	LOW);
+	bcm2835_gpio_write(SCLK,	LOW);
+	bcm2835_gpio_write(CS,		LOW);
+	
+	bcm2835_gpio_write(PIN_RESET,	LOW);
+	bcm2835_gpio_write(PIN_START,	LOW);
+	bcm2835_gpio_write(PIN_PDWN,	LOW);
+	bcm2835_gpio_write(PIN_PWUP,	LOW);
 	bcm2835_gpio_write(PIN_DVDD, 	LOW);
 }
-
 void ADSPowerOn(){
+	//Enable Analog supply to Human Interface
 	bcm2835_gpio_write(PIN_PWUP,	HIGH);
+	//Enable digital supply to Human Interface
 	bcm2835_gpio_write(PIN_DVDD,	HIGH);
-
 }
-
 void ADSPowerOff(){
-	bcm2835_gpio_write(PIN_DVDD,	LOW);
-	bcm2835_gpio_write(PIN_PWUP,	LOW);
+	//Disable Analog supply to Human Interface
+	bcm2835_gpio_write(PIN_PWUP,	HIGH);
+	//Disable digital supply to Human Interface
+	bcm2835_gpio_write(PIN_DVDD,	HIGH);
 }
 
 void ADSInit()
 {
 	//Prepare for reset pulse
-        bcm2835_gpio_write(PIN_RESET,     HIGH);
-        bcm2835_gpio_write(PIN_PDWN,      HIGH);
-
+	bcm2835_gpio_write(PIN_RESET,     HIGH);
+	bcm2835_gpio_write(PIN_PDWN,      HIGH);
 	sleep(1);
 
 	//Send 6us reset pulse
 	int w;
-        bcm2835_gpio_write(PIN_RESET, LOW);
-        for(w=0;w<1000;++w){
+	bcm2835_gpio_write(PIN_RESET, LOW);
+	for(w=0;w<1000;++w){
  	       _NOP();
-        }
+	}
 	//Wait for at least 60us
-        bcm2835_gpio_write(PIN_RESET, HIGH);
-	for(w=0;w<5000;++w)
+	bcm2835_gpio_write(PIN_RESET, HIGH);
+	for(w=0;w<5000;++w){
 		_NOP();
+	}
 }
 
 uint8_t SpiInit()
 {
 	printf("Starting SPI...\n");
-        if (!bcm2835_spi_begin())
-        {
-                printf("Starting SPI failed. Are you running as root?\n");
-                return 1;
-        }
+	if (!bcm2835_spi_begin())
+	{
+		printf("Starting SPI failed. Are you running as root?\n");
+		return 1;
+	}
 
-
-        printf("SPI started!\n");
+	printf("SPI started!\n");
+	
 	//Set spi parameters
-        bcm2835_spi_begin();
-        bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      // The default
-        bcm2835_spi_setDataMode(BCM2835_SPI_MODE1);                   // The default
-        bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128);   // The default
-        bcm2835_spi_chipSelect(BCM2835_SPI_CS0);                      // The default
-        bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS0, LOW);      // The default
+	// This function doesn't do anything as LSB first isn't supported
+	bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);
+
+	//Sets SPI mode to 1
+	bcm2835_spi_setDataMode(BCM2835_SPI_MODE1);	
+	
+	//Sets SCLK frequency to ~2MHz	
+	bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128);
+
+	//Sets CS pin and polarity	
+	bcm2835_spi_chipSelect(BCM2835_SPI_CS0);	
+	bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS0, LOW);
+
 }
 
 void ConfigSetup(uint8_t * config_array)
@@ -117,9 +130,12 @@ void ChannelSetup(uint8_t * channel_array)
 
 void StartupSequence()
 {
-	uint8_t seq_length = 13;
+	//Create an array to store the Startup commands
+	uint8_t seq_length = 5;
 	uint8_t sequence[seq_length];
 	uint8_t i;
+	
+	//Start with SDATAC, and end with STOP. Fill the rest with 0x00
 	sequence[0] = SDATAC;
 	for(i=1;i<seq_length;++i)
 		sequence[i] = (i==seq_length-2) ? STOP : 0x00;
@@ -128,13 +144,17 @@ void StartupSequence()
 	//Initialize CONFIG Registers
 	uint8_t config_array[3] = {0x96,0xC0,0xEC};
 	ConfigSetup(config_array);
+	
 	//Initialize CHANNEL Registers
-	uint8_t channel_array[8] = {0x07,0x81,0x81,0x81,0x81,0x81,0x81,0x81};
-	//uint8_t channel_array[8] = {0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07}
+	uint8_t channel_array[8] = {0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07}
 	ChannelSetup(channel_array);
+	
+	//Enable SRB1
 	uint8_t misc = 0x20;
-	uint8_t bias_sense[2] = {0xFF, 0xFF};
 	WriteRegister(&misc, REG_MISC1, 1);
+	
+	//Enable bias averaging on all channels
+	uint8_t bias_sense[2] = {0xFF, 0xFF};
 	WriteRegister(bias_sense, REG_BIAS_SENSP, 2);
 }
 
@@ -365,33 +385,34 @@ uint8_t WriteRegister(uint8_t * reg_values, uint8_t reg, uint8_t length)
 	return 1;
 }
 
-void LSLInit(char *channels[],lsl_outlet * outlet){
-	uint8_t include_meta_data = 1; //Set to include meta data
-        lsl_streaminfo info;
-	lsl_xml_ptr desc, chn, chns;   	//XML element pointers
-	uint8_t c,t;                    	//Channel index
+void LSLInit(lsl_outlet * outlet)
+{
+	lsl_streaminfo info;
+	char channels[] = { 'C1', 'C2','C3','C4','C5','C6','C7','C8'};	//Channel Labels
+	lsl_xml_ptr desc, chn, chns;	//XML element pointers
+	uint8_t c;			//Channel index
 
 	//Declare a new streaminfo
 	//Group: RaspPi, content type: EEG, 8 channels, 100 Hz, float values
-        //Name of node, must follow the format 'nodePiX', where X is one larger than the last node
-        info = lsl_create_streaminfo("RaspPi","EEG",8,100,cft_float32,"nodePi1");
+	//Name of node, must follow the format 'nodePiX', where X is unique
+	info = lsl_create_streaminfo("RaspPi","EEG",8,100,cft_float32,"nodePi1");
 
-	if(include_meta_data){
-	        //Add meta-data fields
-	        //For more standard fields, see https://github.com/sccn/xdf/wiki/Meta-Data)
-		//Meta-data is received on the MATLAB side in the initial connection
-		desc = lsl_get_desc(info);
-	        lsl_append_child_value(desc, "manufacturer", "Grp16160");
-		chns = lsl_append_child(desc,"channels");
-	        for (c=0;c<8;c++) {
-	                chn = lsl_append_child(chns,"channel");
-	                lsl_append_child_value(chn,"label",channels[c]);
-	                lsl_append_child_value(chn,"unit","microvolts");
-	                lsl_append_child_value(chn,"type","EEG");
+
+	//Add meta-data fields
+	//For more standard fields, see https://github.com/sccn/xdf/wiki/Meta-Data)
+	//Meta-data is received on the MATLAB side in the initial connection
+	desc = lsl_get_desc(info);
+	lsl_append_child_value(desc, "manufacturer", "Grp16160");
+	chns = lsl_append_child(desc,"channels");
+	for (c=0;c<8;c++) {
+		chn = lsl_append_child(chns,"channel");
+		lsl_append_child_value(chn,"label",channels[c]);
+		lsl_append_child_value(chn,"unit","Extrovolts");
+		lsl_append_child_value(chn,"type","EEG");
       		}
 	}
 
-        //Make a new outlet with chunk size: 1 and buffe size: 360 seconds
+        //Make a new outlet with chunk size: 1 and buffer size: 360 seconds (6 minutes)
         *outlet = lsl_create_outlet(info,1,360);
 }
 
