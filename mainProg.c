@@ -9,8 +9,6 @@
 #include <string.h>
 #include <time.h>
 
-char *channels[] = {"C1","C2","C3","C4","C5","C6","C7","C8"};
-
 int main()
 {
 	//Struct and pointer for ReadContinuous
@@ -35,7 +33,7 @@ int main()
 	PinInit();
 
 	//Initialise Lab Streaming Layer
-	LSLInit(channels,&outlet);
+	LSLInit(&outlet);
 
 	//Turn on the Analog and Digital supply on the ADS
 	ADSPowerOn();
@@ -55,30 +53,33 @@ int main()
 	bcm2835_gpio_fsel(RPI_V2_GPIO_P1_05 , BCM2835_GPIO_FSEL_OUTP);
 	bcm2835_gpio_write(RPI_V2_GPIO_P1_05 , LOW);
 
-	while(run){
-		printf("\n\n---------------------");
-		printf("\n\nChoose an option!\n\n");
-		printf("0: Close Program\n");
-		printf("1: Read Registers\n");
-		printf("2: Single Read from ADS1299\n");
-		printf("3: Continuous Read from ADS1299\n");
-		printf("4: Manually Write Registers\n");
-		printf("5: Reset Registers\n\n");
-		printf("Option: ");
-		while(option == 0xff){
-			scanf("%s", str);
-			if(!sscanf(str, "%d", &option))
-                                printf("Error! Input was not an option!\n");
-		}
+	while(1){
+	printf("\n\n---------------------");
+	printf("\n\nChoose an option!\n\n");
+	printf("0: Close Program\n");
+	printf("1: Read Registers\n");
+	printf("2: Single Read from ADS1299\n");
+	printf("3: Continuous Read from ADS1299\n");
+	printf("4: Manually Write Registers\n");
+	printf("5: Reset Registers\n\n");
+	printf("Option: ");
+
+	//User input is scanned for integers
+	while(option == 0xff){
+		scanf("%s", str);
+		if(!sscanf(str, "%d", &option))
+			printf("Error! Input was not an option!\n");
+	}
 		printf("\n");
+
 		if(option == 0){
-			//Close Program
+			//Leave Loop
 			break;
 		}
 		else if(option == 1){
 			//Read registers
 			uint8_t read_array[27];
-			//Read register output casted to pointer to kill a warning
+			//Read register output casted to pointer to kill a warning during compilation
                         uint8_t * out_array = (uint8_t *)ReadRegister(read_array,REG_ID, 24);
                         int i;
                         for(i = 0;i<24;i++)
@@ -96,38 +97,17 @@ int main()
 			char quit_str[2] = {0,0};
 			memset(RCAptr->read_array,0,27);
 
-			//Get time for first event
-			last_event = InitReadMicrophone(&get_time);
-			//clock_gettime(CLOCK_REALTIME, &get_time);
-
-
 			InitReadContinuous();
+
+			//Get time for first event
+			last_event = InitReadExternal(&get_time);
+
+
 			printf("Now transmitting data via LSL...\n"); //Add name of node
 			printf("Enter 'q' to exit\n\n");
 			while(1){
 				ReadContinuous(&outlet,RCAptr);
-
-				//Check time since last event
-				//clock_gettime(CLOCK_REALTIME, &get_time);
-		                //event_difference = get_time.tv_nsec - last_event;
-
-				//If last_event is greater than 1.000.000.00
-				//Create a new last_event from current time
-				//Check difference again
-               			/*if(event_difference < 0){
-		                        clock_gettime(CLOCK_REALTIME, &get_time);
-		                        last_event = get_time.tv_nsec;
-		                        event_difference = get_time.tv_nsec - last_event;
-		                }
-
-				//If time since last_event is 1ms, run this
-		                if(event_difference > 1000000){
-	                        	last_event += 1000000;
-	                        	io_state ^= 1;
-	                        	bcm2835_gpio_write(RPI_V2_GPIO_P1_05 , io_state);
-					//ReadMicrophone(&outletMic)
-				}*/
-				ReadMicrophone(&get_time, &last_event);
+				ReadExternal(&get_time, &last_event);
 
 				//Check if user has entered 'q' and quit
 				if(InputCheck(0)){
