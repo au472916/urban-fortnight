@@ -16,31 +16,40 @@ int main()
 	//Struct and pointer for ReadContinuous
 	RCArrays my_RCArrays;
 	RCArrays *RCAptr = &my_RCArrays;
-	//LSL outlet for ReadContinuous and MicrophoneRead
+
+	//Array for printing single read option
+	long channel[8];
+
+	//LSL outlet for ReadContinuous and ExternalRead
 	lsl_outlet outlet;
 
+	//Variables for user input
 	char str[100];
-	char run = 1;
 	char option = 0xff;
-	long channel[8];
+
+	//counter variable for for loops
 	int i;
 
-	//Variables for timing
-	long int last_event;
-	long int event_difference;
-	struct timespec get_time;
-	uint8_t io_state = 0;
 
-
+	//Initialise GPIO pins
 	PinInit();
-	LSLInit(channels,&outlet);
-        ADSPowerOn();
-        sleep(1);
 
-        ADSInit();
-        SpiInit();
+	//Initialise Lab Streaming Layer
+	LSLInit(channels,&outlet);
+
+	//Turn on the Analog and Digital supply on the ADS
+	ADSPowerOn();
+	sleep(1);
+
+	//Initialise the ADS1299
+	ADSInit();
+
+	//Initialise SPI
+	SpiInit();
 	usleep(100);
-        StartupSequence();
+
+	//Establish connection with and configure ADS1299 
+	StartupSequence();
 
 	// For testing timer!!
 	bcm2835_gpio_fsel(RPI_V2_GPIO_P1_05 , BCM2835_GPIO_FSEL_OUTP);
