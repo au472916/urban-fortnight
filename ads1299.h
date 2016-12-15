@@ -75,7 +75,7 @@ void ADSPowerOff();
 void ADSInit();
 uint8_t SpiInit();
 void StartupSequence();
-void LSLInit(char*[],lsl_outlet*);
+void LSLInit(lsl_outlet*);
 
 uint8_t* ReadRegiter(uint8_t*, uint8_t, uint8_t);
 uint8_t WriteRegister(uint8_t*, uint8_t, uint8_t);
@@ -90,9 +90,9 @@ void InitReadContinuous();
 void ReadContinuous(lsl_outlet*, RCArrays*);
 void ExitReadContinuous();
 
-long int InitReadMicrophone(struct timespec*);
-void ReadMicrophone(struct timespec*, long int*);
-void ExitReadMicrophone();
+long int InitReadExternal(struct timespec*);
+void ReadExternal(struct timespec*, long int*);
+void ExitReadExternal();
 
 void TranslateData(long*, uint8_t*, uint8_t);
 void SetupError();
