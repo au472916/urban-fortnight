@@ -209,64 +209,35 @@ void ReadSingle(long * data_array)
 }
 
 void InitReadContinuous(){
+	//Change ADS mode to Continuous Conversion Mode
 	uint8_t com_var[2] = {START,0x00};
-        bcm2835_spi_writenb(com_var,2);
-        usleep(200000);
-        uint8_t ret_var[2] = {0x00,0x00};
-        com_var[0] = RDATAC;
-        bcm2835_spi_transfernb(com_var,ret_var,2);
+	bcm2835_spi_writenb(com_var,2);
+	usleep(200000);
+	
+	//Change ADS mode to Read Continuous Mode
+	uint8_t ret_var[2] = {0x00,0x00};
+	com_var[0] = RDATAC;
+	bcm2835_spi_transfernb(com_var,ret_var,2);
 	bcm2835_gpio_len(PIN_DRDY);
 }
 
 void ReadContinuous(lsl_outlet * outlet, RCArrays *pRCArrays)
 {
-	//uint8_t read_array[27];
-	//uint8_t return_array[27];
-	//long data_array[8];
-	//memset(read_array, 0 , 27);
-	//bcm2835_gpio_len(PIN_DRDY);
-//	uint8_t i = 0;
-//	char quit_str[2];
-	//Read conversion data and translate to decimal
-//	while(1){
-		if(bcm2835_gpio_eds(PIN_DRDY))
-		{
-//			bcm2835_spi_transfernb(read_array,return_array,27);
-//			TranslateData(data_array, return_array, 27);
-//			bcm2835_gpio_set_eds(PIN_DRDY);
-			bcm2835_spi_transfernb(pRCArrays->read_array,pRCArrays->return_array,27);
-			TranslateData(pRCArrays->data_array, pRCArrays->return_array, 27);
-			bcm2835_gpio_set_eds(PIN_DRDY);
-			lsl_push_sample_l(*outlet,pRCArrays->data_array);
-		}
-//		if(InputCheck(0)){
-//                	scanf("%s", quit_str);
-//                }
-//          	if(!strcmp(quit_str, "q")){
-//                	break;
-//		}
-//	}
-	//New stop from StartupSequence
-//	uint8_t seq_length = 13;
-//      uint8_t sequence[seq_length];
-//        sequence[0] = SDATAC;
-//        for(i=1;i<seq_length;++i)
-//                sequence[i] = (i==seq_length-2) ? STOP : 0x00;
-//        bcm2835_spi_writenb(sequence,seq_length);
+//InitReadContinuous() must be called first
 
-	//Old stop
-/*        uint8_t seq_length = 12;
-        uint8_t sequence[seq_length];
-        sequence[0] = SDATAC;
-        for(i=1;i<seq_length;++i)
-                sequence[i] = (i==seq_length-1) ? STOP : 0x00;
-        bcm2835_spi_writenb(sequence,12);
-*/
+	//Read conversion data and translate to decimal
+	if(bcm2835_gpio_eds(PIN_DRDY))
+	{
+		bcm2835_spi_transfernb(pRCArrays->read_array,pRCArrays->return_array,27);
+		TranslateData(pRCArrays->data_array, pRCArrays->return_array, 27);
+		bcm2835_gpio_set_eds(PIN_DRDY);
+		lsl_push_sample_l(*outlet,pRCArrays->data_array);
+	}
 }
 
 void ExitReadContinuous(){
 	int i;
-	uint8_t seq_length = 13;
+	uint8_t seq_length = 5;
         uint8_t sequence[seq_length];
         sequence[0] = SDATAC;
         for(i=1;i<seq_length;++i)
@@ -274,35 +245,47 @@ void ExitReadContinuous(){
         bcm2835_spi_writenb(sequence,seq_length);
 }
 
-long int InitReadMicrophone(struct timespec *get_time){
+long int InitReadExternal(struct timespec *get_time){
 	clock_gettime(CLOCK_REALTIME, get_time);
 	return get_time->tv_nsec;
+	
+	/* Initialise External ADC SPI*/
+	
 }
 
-void ReadMicrophone(struct timespec *get_time, long int *last_event){
+void ReadExternal(struct timespec *get_time, long int *last_event  ){
+	// This function should execute completely in less than 23us
+	
+	//Find time since last
 	clock_gettime(CLOCK_REALTIME, get_time);
 	long int event_difference = get_time->tv_nsec - *last_event;
 	uint8_t io_state = bcm2835_gpio_lev(RPI_V2_GPIO_P1_05); 
-	//If last_event is greater than 1.000.000.00
-        //Create a new last_event from current time
-        //Check difference again
-        if(event_difference < 0){
-        	clock_gettime(CLOCK_REALTIME, get_time);
-        	*last_event = get_time->tv_nsec;
-        	event_difference = get_time->tv_nsec - *last_event;
-        }
-	//If time since last_event is 1ms, run this
-        if(event_difference > 1000000){
-        	*last_event += 1000000;
-       		io_state ^= 1;
-        	bcm2835_gpio_write(RPI_V2_GPIO_P1_05 , io_state);
-        //ReadMicrophone(&outletMic);
-        }
+	
+	//If last_event is greater than 1,000,000,000, counter overflows and starts over
+	//Checks if counter has overflowed (if current time is less than last time)
+	if(event_difference < 0){
+		clock_gettime(CLOCK_REALTIME, get_time);
+		*last_event = get_time->tv_nsec;
+		event_difference = get_time->tv_nsec - *last_event;
+	 }
+	 
+	//If time since last_event is 25us, run this
+	if(event_difference >= 25000){
+		//Reset last_event
+		clock_gettime(CLOCK_REALTIME, get_time);
+		*last_event = get_time->tv_nsec;
+		
+		//Toggle pin level to test timing
+		io_state ^= 1;
+		bcm2835_gpio_write(RPI_V2_GPIO_P1_05 , io_state);
+		
+		/* Read from ADC and prepare data to send to LSL*/
+		/* Push collected sample to LSL stream */
+	}
 
 }
 
 void ExitReadMicrophone(){
-
 }
 
 uint8_t * ReadRegister(uint8_t * read_array, uint8_t reg, uint8_t length)
@@ -311,6 +294,7 @@ uint8_t * ReadRegister(uint8_t * read_array, uint8_t reg, uint8_t length)
 		printf("Length must be greater than 0\n");
 		return NULL;
 	}
+	//Prepare array to send to ADS1299
 	uint8_t read_length = length + 3;
 	read_array[0] = reg + RREG;
 	read_array[1] = length - 1;
@@ -318,9 +302,14 @@ uint8_t * ReadRegister(uint8_t * read_array, uint8_t reg, uint8_t length)
 	for(i=2;i<read_length;++i){
 		read_array[i] = 0x00;
 	}
+	
+	//Read from MISO
 	bcm2835_spi_transfern(read_array, read_length);
+	
+	//Return pointer to start of data
 	return read_array+2;
 }
+
 void WriteRegisterSingle(uint8_t reg_value, uint8_t reg)
 {
 	uint8_t write_array[4];
@@ -345,7 +334,6 @@ void WriteRegisterSingle(uint8_t reg_value, uint8_t reg)
                 ++timeout;
         }while(memcmp(&reg_value,cmp_array,1)&&timeout<10);
 }
-
 
 uint8_t WriteRegister(uint8_t * reg_values, uint8_t reg, uint8_t length)
 {
@@ -372,7 +360,7 @@ uint8_t WriteRegister(uint8_t * reg_values, uint8_t reg, uint8_t length)
 
         	if(timeout<10){
                 	for(i=0;i<length;++i)
-                        	printf("Reg: %02X\tCmp: %02X \n", reg_values[i], cmp_array[i]);
+                        	printf("Reg: %02X\tCmp: %02X \n", reg_values[i],cmp_array[i]);
         	}
 
 		++timeout;
