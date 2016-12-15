@@ -398,7 +398,6 @@ void LSLInit(lsl_outlet * outlet)
 		lsl_append_child_value(chn,"unit","Extrovolts");
 		lsl_append_child_value(chn,"type","EEG");
       		}
-	}
 
         //Make a new outlet with chunk size: 1 and buffer size: 360 seconds (6 minutes)
         *outlet = lsl_create_outlet(info,1,360);
